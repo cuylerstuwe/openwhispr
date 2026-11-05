@@ -4704,12 +4704,6 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
     { clientTranscriptionId, analyticsOccurredAt } = {}
   ) {
     const { dataRetentionEnabled, audioRetentionDays } = getEffectiveRetentionPreferences();
-    if (!dataRetentionEnabled) {
-      logger.debug("Skipping transcription save — data retention disabled", {}, "audio");
-      this.lastAudioBlob = null;
-      this.lastAudioMetadata = null;
-      return true;
-    }
 
     const eventId = clientTranscriptionId || crypto.randomUUID();
     const occurredAt = analyticsOccurredAt ? new Date(analyticsOccurredAt) : new Date();
@@ -4731,6 +4725,13 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
         { error: analyticsError.message },
         "analytics"
       );
+    }
+
+    if (!dataRetentionEnabled) {
+      logger.debug("Skipping transcription save — data retention disabled", {}, "audio");
+      this.lastAudioBlob = null;
+      this.lastAudioMetadata = null;
+      return true;
     }
 
     try {

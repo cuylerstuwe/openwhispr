@@ -1,82 +1,40 @@
-import { useState, useRef, useEffect, useId } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  FileAudio,
-  X,
-  AlertCircle,
-  AlertTriangle,
-  ArrowRight,
-  FolderOpen,
-  Plus,
-  Settings,
-  Link2,
-  Users,
-} from "../icons";
 import { useShallow } from "zustand/react/shallow";
-import { Button } from "../ui/button";
-import { PAGE_CONTENT_WIDTH_CLASS } from "../ui/pageWidth";
-import { CARD_SURFACE_CLASS } from "../ui/surfaces";
-import { GRADIENT_CIRCLE } from "../ui/gradientCircle";
-import { Toggle } from "../ui/toggle";
-import EmptyStateCard from "../ui/EmptyStateCard";
-import { DropZone } from "../ui/DropZone";
-import { cn } from "../lib/utils";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectSeparator,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog";
-import { Input } from "../ui/input";
-import type { FolderItem } from "../../types/electron";
-import {
-  findDefaultFolder,
-  findVideosFolder,
-  DOWNLOAD_ERROR_KEYS,
-  transcriptionErrorKey,
-  uploadRestrictionKey,
-  MEETINGS_FOLDER_NAME,
-} from "./shared";
+import { MAX_SPEAKER_COUNT } from "../../constants/speakerDetection.json";
+import { byokFileSizeLimit, resolveTranscriptionRoute } from "../../helpers/transcriptionRoute";
 import { useAuth } from "../../hooks/useAuth";
-import { useUsage } from "../../hooks/useUsage";
-import { useSettings } from "../../hooks/useSettings";
-import { requestSignIn } from "../../utils/requestSignIn";
-import { describeProviderError } from "../../utils/describeProviderError";
 import {
+  usePolicySnapshot,
+  useTranscriptionChoiceRefusal,
+  useTranscriptionContextAllowed,
+} from "../../hooks/usePolicy";
+import { useSettings } from "../../hooks/useSettings";
+import { useUsage } from "../../hooks/useUsage";
+import {
+  enterpriseProviderName,
   getAllReasoningModels,
   getBatchTranscriptionModel,
   getParakeetModelInfo,
   getTranscriptionProviders,
   isSherpaLocalProvider,
-  enterpriseProviderName,
 } from "../../models/ModelRegistry";
-import {
-  useSettingsStore,
-  selectIsCloudCleanupMode,
-  selectPolicyEffectiveSettings,
-  selectResolvedUploadTranscription,
-  getSettings,
-} from "../../stores/settingsStore";
-import { useBatchQueue } from "../../stores/batchQueueStore";
-import type { TranscribeOptions } from "../../stores/batchQueueStore";
-import {
-  transcribeFileWithSpeakers,
-  resolveDiarizationSettings,
-  shouldUseByokDiarize,
-  getTranscriptionApiKey,
-} from "../../services/fileTranscription";
 import type {
+  DiarizationSettings,
   FileTranscriptionConfig,
   FileTranscriptionResult,
-  DiarizationSettings,
 } from "../../services/fileTranscription";
-import { MAX_SPEAKER_COUNT } from "../../constants/speakerDetection.json";
-import BatchQueueView from "./BatchQueueView";
-import { generateNoteTitle } from "../../utils/generateTitle";
-import { getBaseLanguageCode } from "../../utils/languageSupport";
+import {
+  getTranscriptionApiKey,
+  resolveDiarizationSettings,
+  shouldUseByokDiarize,
+  transcribeFileWithSpeakers,
+} from "../../services/fileTranscription";
+import { isManagedTranscriptionActive } from "../../services/managedTranscription";
+import { saveUploadNote, uploadTitleFallback } from "../../services/uploadNotes";
+import type { TranscribeOptions } from "../../stores/batchQueueStore";
+import { useBatchQueue } from "../../stores/batchQueueStore";
+import { useManagedScopeResolution } from "../../stores/enterpriseIdentityStore";
 import {
   isAudioFeatureAllowed,
   isAudioFeatureDenied,
@@ -85,16 +43,58 @@ import {
 } from "../../stores/policyRules";
 import { usePolicyStore } from "../../stores/policyStore";
 import {
-  usePolicySnapshot,
-  useTranscriptionChoiceRefusal,
-  useTranscriptionContextAllowed,
-} from "../../hooks/usePolicy";
-import { byokFileSizeLimit, resolveTranscriptionRoute } from "../../helpers/transcriptionRoute";
-import { saveUploadNote, uploadTitleFallback } from "../../services/uploadNotes";
-import { useManagedScopeResolution } from "../../stores/enterpriseIdentityStore";
-import { isManagedTranscriptionActive } from "../../services/managedTranscription";
-import { UploadCompleteWarnings, UploadModelSettingsButton } from "./UploadAudioFeedback";
+  getSettings,
+  selectIsCloudCleanupMode,
+  selectPolicyEffectiveSettings,
+  selectResolvedUploadTranscription,
+  useSettingsStore,
+} from "../../stores/settingsStore";
+import type { FolderItem } from "../../types/electron";
+import { describeProviderError } from "../../utils/describeProviderError";
+import { generateNoteTitle } from "../../utils/generateTitle";
+import { getBaseLanguageCode } from "../../utils/languageSupport";
+import { requestSignIn } from "../../utils/requestSignIn";
 import { isSupportedUploadFile, uploadFileUrlPattern } from "../../utils/uploadAudioFormats";
+import {
+  AlertCircle,
+  AlertTriangle,
+  ArrowRight,
+  FileAudio,
+  FolderOpen,
+  Link2,
+  Plus,
+  Settings,
+  Users,
+  X,
+} from "../icons";
+import { cn } from "../lib/utils";
+import { Button } from "../ui/button";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
+import { DropZone } from "../ui/DropZone";
+import EmptyStateCard from "../ui/EmptyStateCard";
+import { GRADIENT_CIRCLE } from "../ui/gradientCircle";
+import { Input } from "../ui/input";
+import { PAGE_CONTENT_WIDTH_CLASS } from "../ui/pageWidth";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { CARD_SURFACE_CLASS } from "../ui/surfaces";
+import { Toggle } from "../ui/toggle";
+import BatchQueueView from "./BatchQueueView";
+import {
+  DOWNLOAD_ERROR_KEYS,
+  findDefaultFolder,
+  findVideosFolder,
+  MEETINGS_FOLDER_NAME,
+  transcriptionErrorKey,
+  uploadRestrictionKey,
+} from "./shared";
+import { UploadCompleteWarnings, UploadModelSettingsButton } from "./UploadAudioFeedback";
 
 type UploadState = "idle" | "selected" | "downloading" | "transcribing" | "complete" | "error";
 
@@ -1652,35 +1652,13 @@ function SelectedView({
         </div>
       )}
 
-      {/* BYOK file too large — shared explanation */}
       {byokTooLarge && (
-        <div className="rounded-xl border border-primary/15 bg-primary/5 px-4 py-3 dark:bg-primary/10">
-          <p className="text-[13px] leading-relaxed text-foreground/80">
-            {t("notes.upload.byokTooLarge", { size: byokMaxFileSizeMb })}
-          </p>
-          <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
-            {t("notes.upload.byokTooLargeDetail", { size: byokMaxFileSizeMb })}
-          </p>
-          <p className="mt-1.5 text-[13px] font-medium leading-relaxed text-foreground">
-            {requiresAccount
-              ? t("notes.upload.byokTooLargeNeedsAccount")
-              : isProUser
-                ? t("notes.upload.switchToCloudForLargeFiles")
-                : t("notes.upload.byokTooLargeNeedsUpgrade")}
-          </p>
-        </div>
+        <p className="text-sm text-muted-foreground">
+          This file exceeds the selected provider's {byokMaxFileSizeMb} MB request limit. Choose a
+          local model or another endpoint in Settings.
+        </p>
       )}
 
-      {/* Cloud free user, file > 25 MB → needs paid plan */}
-      {requiresUpgrade && !fileTooLarge && (
-        <div className="rounded-xl border border-primary/15 bg-primary/5 px-4 py-3 dark:bg-primary/10">
-          <p className="text-[13px] leading-relaxed text-foreground/80">
-            {t("notes.upload.paidPlanRequired")}
-          </p>
-        </div>
-      )}
-
-      {/* Cloud large file info (Pro user, will be chunked) */}
       {isLargeFile && !requiresUpgrade && !fileTooLarge && isOpenWhisprCloud && (
         <p className="text-center text-[13px] text-muted-foreground">
           {t("notes.upload.largeFileNote")}
@@ -1688,35 +1666,11 @@ function SelectedView({
       )}
 
       <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
-        {/* BYOK too large — not signed in: Create Account */}
-        {byokTooLarge && requiresAccount && (
-          <Button onClick={onCreateAccount} className={PRIMARY_ACTION_CLASS}>
-            {t("notes.upload.createAccount")}
+        {!canTranscribe && (
+          <Button variant="outline" onClick={() => onOpenSettings?.("uploadTranscription")}>
+            Choose another model
           </Button>
         )}
-
-        {/* BYOK too large — signed in, Pro: Switch to Cloud */}
-        {byokTooLarge && !requiresAccount && isProUser && (
-          <Button onClick={onSwitchToCloud} className={PRIMARY_ACTION_CLASS}>
-            {t("notes.upload.switchToCloud")}
-          </Button>
-        )}
-
-        {/* BYOK too large — signed in, Free: Upgrade */}
-        {byokTooLarge && !requiresAccount && !isProUser && (
-          <Button onClick={onUpgrade} className={PRIMARY_ACTION_CLASS}>
-            {t("notes.upload.upgrade")}
-          </Button>
-        )}
-
-        {/* Cloud requires upgrade */}
-        {!byokTooLarge && requiresUpgrade && (
-          <Button onClick={onUpgrade} className={PRIMARY_ACTION_CLASS}>
-            {t("notes.upload.upgrade")}
-          </Button>
-        )}
-
-        {/* Normal: can transcribe */}
         {canTranscribe && (
           <Button
             onClick={handleTranscribe}

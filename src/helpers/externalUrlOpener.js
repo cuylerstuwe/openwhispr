@@ -27,6 +27,7 @@ const debugLogger = require("./debugLogger");
 const EXPLORER_BREAKING_CHARS = /[?#=,]/;
 
 async function openExternalUrl(url) {
+  if (require("./personalBoundary").isCompanyUrl(url)) return;
   const { protocol, href } = new URL(url);
   if (
     process.platform === "win32" &&

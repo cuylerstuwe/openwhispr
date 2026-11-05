@@ -325,3 +325,27 @@ src/assets/fonts/yowza/*.otf
 
 # Local scratch output from the Superpowers Claude Code plugin (SDD fix reports etc.).
 .superpowers/
+
+# Personal profiles, credentials, local recordings, and audit/build scratch data.
+.env.*
+!.env.example
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+credentials*.json
+parakeet-api-connections.json
+personal-smoke-profile/
+*-profile-backup*/
+privacy-audit*/
+work/
+outputs/
+recordings/

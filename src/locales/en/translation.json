@@ -68,7 +68,7 @@
     "tooltip": "OpenWhispr - Voice Dictation"
   },
   "menu": {
-    "appLabel": "OpenWhispr",
+    "appLabel": "Whispr Personal",
     "quit": "Quit OpenWhispr",
     "speech": "Speech",
     "settings": "Settings...",
@@ -78,8 +78,8 @@
     "closeWindow": "Close Window"
   },
   "window": {
-    "voiceRecorderTitle": "Voice Recorder",
-    "controlPanelTitle": "Control Panel"
+    "voiceRecorderTitle": "Whispr Personal Dictation",
+    "controlPanelTitle": "Whispr Personal"
   },
   "dialog": {
     "openLink": {
@@ -1640,7 +1640,7 @@
     "managedByOrg": "Some settings are managed by your organization.",
     "managedAccount": "Managed account",
     "groups": {
-      "account": "Account",
+      "account": "Personal",
       "workspace": "Workspace",
       "aiModels": "AI Models",
       "system": "System"

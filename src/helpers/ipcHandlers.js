@@ -6865,11 +6865,7 @@ class IPCHandlers {
       return {};
     })();
 
-    const getApiUrl = () =>
-      process.env.OPENWHISPR_API_URL ||
-      process.env.VITE_OPENWHISPR_API_URL ||
-      runtimeEnv.VITE_OPENWHISPR_API_URL ||
-      "";
+    const getApiUrl = () => ""; // Company services are absent in this personal edition.
 
     const getAuthUrl = () =>
       process.env.AUTH_URL ||

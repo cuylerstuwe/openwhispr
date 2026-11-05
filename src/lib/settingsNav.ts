@@ -77,28 +77,10 @@ export function buildSettingsNav({
   hasWorkspace,
   canManageSettings,
 }: SettingsNavInput): SettingsNavEntry[] {
-  const workspace: SettingsNavEntry[] = !isSignedIn
-    ? []
-    : [
-        { id: "workspaceGeneral", group: "workspace" },
-        ...(hasWorkspace
-          ? ([
-              { id: "workspacePeople", group: "workspace" },
-              { id: "workspaceTeamspaces", group: "workspace" },
-            ] as const)
-          : []),
-        ...(hasWorkspace && canManageSettings
-          ? [{ id: "workspaceDeveloper", group: "workspace" } as const]
-          : []),
-      ];
-
   return [
-    { id: "account", group: "account" },
     { id: "general", group: "account" },
     { id: "toneStyle", group: "account" },
     { id: "hotkeys", group: "account" },
-    { id: "plansBilling", group: "account" },
-    ...workspace,
     { id: "speechToText", group: "aiModels" },
     { id: "llms", group: "aiModels" },
     { id: "privacyData", group: "system" },
@@ -110,7 +92,7 @@ export function resolveSettingsSection(
   requested: string | undefined,
   available: SettingsNavEntry[]
 ): SettingsSectionType {
-  if (!requested) return "account";
+  if (!requested) return "general";
   const section = SECTION_ALIASES[requested] ?? requested;
   if (available.some((entry) => entry.id === section)) return section as SettingsSectionType;
   // A workspace page the user can't see (no workspace yet, or no manage_settings) still lands
@@ -121,5 +103,5 @@ export function resolveSettingsSection(
   ) {
     return "workspaceGeneral";
   }
-  return "account";
+  return "general";
 }

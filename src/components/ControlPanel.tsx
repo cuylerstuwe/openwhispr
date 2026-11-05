@@ -1,46 +1,25 @@
-import React, { Suspense, useState, useEffect, useRef, useCallback } from "react";
+import React, { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
-import { Button } from "./ui/button";
-import { PAGE_CONTENT_WIDTH_CLASS } from "./ui/pageWidth";
-import { cn } from "./lib/utils";
-import { BIDI_VALUE_TOKEN, BidiInterpolatedText } from "./ui/BidiInterpolatedText";
-import { Download, RefreshCw, Loader2, AlertTriangle, Zap } from "./icons";
-import UpgradePrompt from "./UpgradePrompt";
-import PostMigrationOnboarding from "./PostMigrationOnboarding";
-import { RequiredModelsBanner } from "./RequiredModelsBanner";
-import { ConfirmDialog, AlertDialog } from "./ui/dialog";
-import { useDialogs } from "../hooks/useDialogs";
-import { useSignOut } from "../hooks/useSignOut";
-import { useHotkey } from "../hooks/useHotkey";
-import { useToast } from "./ui/useToast";
-import { useUpdater } from "../hooks/useUpdater";
-import { useSettings } from "../hooks/useSettings";
-import { recordingRecorderName } from "../utils/noteRecorder";
+import { handleMeetingRecordingRequest } from "../helpers/meetingRecordingRequest";
 import { useAuth } from "../hooks/useAuth";
+import { useCollapsibleSidebar } from "../hooks/useCollapsibleSidebar";
+import { useDialogs } from "../hooks/useDialogs";
+import { useHotkey } from "../hooks/useHotkey";
 import { useJoinableWorkspaces } from "../hooks/useJoinableWorkspaces";
+import { useMeetingNoteSession } from "../hooks/useMeetingNoteSession";
+import { useMeetingAutoTranscriptionCheck, usePolicySnapshot } from "../hooks/usePolicy";
+import { useSettings } from "../hooks/useSettings";
+import { useSignOut } from "../hooks/useSignOut";
+import { useUpdater } from "../hooks/useUpdater";
 import { useUsage } from "../hooks/useUsage";
 import { decideUpsell } from "../lib/upsell";
-import { useCollapsibleSidebar } from "../hooks/useCollapsibleSidebar";
+import { getManagedTranscriptionResolution } from "../services/managedTranscription";
 import {
-  useTranscriptions,
-  useShowDiscarded,
-  initializeTranscriptions,
-  removeTranscription as removeFromStore,
-  updateTranscription as updateInStore,
-  clearTranscriptions as clearStore,
-} from "../stores/transcriptionStore";
-import {
-  getSettings,
-  selectPolicyEffectiveSettings,
-  useSettingsStore,
-} from "../stores/settingsStore";
-import { usePolicyStore } from "../stores/policyStore";
-import { useWorkspaceStore } from "../stores/workspaceStore";
-import type { EnterpriseAudioTestLink } from "../types/enterpriseAudio";
-import { usePolicySnapshot, useMeetingAutoTranscriptionCheck } from "../hooks/usePolicy";
-import { handleMeetingRecordingRequest } from "../helpers/meetingRecordingRequest";
-import { useMeetingNoteSession } from "../hooks/useMeetingNoteSession";
+  useIsMeetingMode,
+  useIsNarrowWindow,
+  useMeetingRecordingStore,
+} from "../stores/meetingRecordingStore";
 import {
   isAgentAllowed,
   isAudioFeatureAllowed,
@@ -50,65 +29,85 @@ import {
   isUpdateRequiredByOrg,
   transcriptionChoiceRefusal,
 } from "../stores/policyRules";
-import { getManagedTranscriptionResolution } from "../services/managedTranscription";
+import { usePolicyStore } from "../stores/policyStore";
 import {
-  useIsMeetingMode,
-  useIsNarrowWindow,
-  useMeetingRecordingStore,
-} from "../stores/meetingRecordingStore";
+  getSettings,
+  selectPolicyEffectiveSettings,
+  useSettingsStore,
+} from "../stores/settingsStore";
+import {
+  clearTranscriptions as clearStore,
+  initializeTranscriptions,
+  removeTranscription as removeFromStore,
+  updateTranscription as updateInStore,
+  useShowDiscarded,
+  useTranscriptions,
+} from "../stores/transcriptionStore";
+import { useWorkspaceStore } from "../stores/workspaceStore";
+import type { EnterpriseAudioTestLink } from "../types/enterpriseAudio";
+import { recordingRecorderName } from "../utils/noteRecorder";
+import { useControlPanelNavItems, type ControlPanelView } from "./controlPanelNav";
 import ControlPanelSidebar from "./ControlPanelSidebar";
 import ControlPanelTopBar from "./ControlPanelTopBar";
-import { useControlPanelNavItems, type ControlPanelView } from "./controlPanelNav";
+import { AlertTriangle, Download, Loader2, RefreshCw, Zap } from "./icons";
 import {
   DEFAULT_INTEGRATIONS_SECTION,
   type IntegrationsSection,
 } from "./integrations/integrationsSections";
+import { cn } from "./lib/utils";
 import { navigateMeetingNotification } from "./meetingNotificationNavigation";
 import MeetingRecordingMount from "./MeetingRecordingMount";
 import MeetingRecordingPill from "./notes/MeetingRecordingPill";
 import NewNoteMenu from "./notes/NewNoteMenu";
+import PostMigrationOnboarding from "./PostMigrationOnboarding";
 import ProfileMenu from "./ProfileMenu";
+import { RequiredModelsBanner } from "./RequiredModelsBanner";
+import { BIDI_VALUE_TOKEN, BidiInterpolatedText } from "./ui/BidiInterpolatedText";
+import { Button } from "./ui/button";
+import { AlertDialog, ConfirmDialog } from "./ui/dialog";
+import { PAGE_CONTENT_WIDTH_CLASS } from "./ui/pageWidth";
+import { useToast } from "./ui/useToast";
+import UpgradePrompt from "./UpgradePrompt";
 
-import { getCachedPlatform } from "../utils/platform";
-import { isAccessibilitySkipped } from "../utils/permissions";
-import { useGpuBannerAvailability } from "../hooks/useGpuBannerAvailability";
-import { startRecordingForNote, useCreateNote } from "../hooks/useCreateNote";
-import { useSignInCloudNudge } from "../hooks/useSignInCloudNudge";
-import {
-  setActiveNoteId,
-  setActiveFolderId,
-  navigateToContainer,
-  ensureNoteLoaded,
-  useActiveNoteId,
-  initializeNotes,
-  subscribeMeetingNotificationFolders,
-} from "../stores/noteStore";
-import { fetchProviders as fetchStreamingProviders } from "../stores/streamingProvidersStore";
 import {
   executeTranslationChain,
   hasTextContent,
   shouldRunTranslateStep,
 } from "../helpers/translationChain";
-import { applyChineseScript, resolveChineseScriptTarget } from "../utils/chineseScript";
+import { startRecordingForNote, useCreateNote } from "../hooks/useCreateNote";
+import { useGpuBannerAvailability } from "../hooks/useGpuBannerAvailability";
+import { useInvitationNotesEntry } from "../hooks/useInvitationNotesEntry";
+import { syncService } from "../services/SyncService.js";
+import { useModalGate } from "../stores/modalGateStore";
+import {
+  ensureNoteLoaded,
+  initializeNotes,
+  navigateToContainer,
+  setActiveFolderId,
+  setActiveNoteId,
+  subscribeMeetingNotificationFolders,
+  useActiveNoteId,
+} from "../stores/noteStore";
+import { fetchProviders as fetchStreamingProviders } from "../stores/streamingProvidersStore";
+import type { SkillChatRequest, SkillChatStart, SkillOpenRequest } from "../types/skills";
 import { getAgentName } from "../utils/agentName";
-import HistoryView from "./HistoryView";
-import BackgroundActionToastListener from "./notes/BackgroundActionToastListener";
-import AssistantNoteUndoListener from "./notes/AssistantNoteUndoListener";
+import { applyChineseScript, resolveChineseScriptTarget } from "../utils/chineseScript";
 import { providerErrorActions, providerErrorToastProps } from "../utils/describeProviderError";
+import logger from "../utils/logger";
+import {
+  clearPendingInvitationToken,
+  consumePendingInvitationToken,
+} from "../utils/pendingInvitationToken";
+import { isAccessibilitySkipped } from "../utils/permissions";
+import { getCachedPlatform } from "../utils/platform";
+import AcceptInvitationModal from "./AcceptInvitationModal";
+import type { SourceNote } from "./chat/useSourceNote";
+import HistoryView from "./HistoryView";
+import JoinYourTeamModal from "./JoinYourTeamModal";
+import AssistantNoteUndoListener from "./notes/AssistantNoteUndoListener";
+import BackgroundActionToastListener from "./notes/BackgroundActionToastListener";
 import SpaceSyncToastListener from "./notes/SpaceSyncToastListener";
 import SharedDictionaryArrivalToastListener from "./SharedDictionaryArrivalToastListener";
-import { syncService } from "../services/SyncService.js";
-import logger from "../utils/logger";
-import AcceptInvitationModal from "./AcceptInvitationModal";
-import JoinYourTeamModal from "./JoinYourTeamModal";
-import { useModalGate } from "../stores/modalGateStore";
-import { useInvitationNotesEntry } from "../hooks/useInvitationNotesEntry";
-import {
-  consumePendingInvitationToken,
-  clearPendingInvitationToken,
-} from "../utils/pendingInvitationToken";
-import type { SkillChatRequest, SkillChatStart, SkillOpenRequest } from "../types/skills";
-import type { SourceNote } from "./chat/useSourceNote";
 
 const platform = getCachedPlatform();
 
@@ -234,7 +233,11 @@ export default function ControlPanel({ initialSettingsSection }: ControlPanelPro
     setSettingsSection("transcription");
     setShowSettings(true);
   }, []);
-  useSignInCloudNudge(isSignedIn, openTranscriptionSettings);
+  useEffect(() => {
+    window.addEventListener("personal-open-model-settings", openTranscriptionSettings);
+    return () =>
+      window.removeEventListener("personal-open-model-settings", openTranscriptionSettings);
+  }, [openTranscriptionSettings]);
   const workspacesLoaded = useWorkspaceStore((state) => state.loaded);
   const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId);
   const [audioTestLink, setAudioTestLink] = useState<EnterpriseAudioTestLink | null>(null);

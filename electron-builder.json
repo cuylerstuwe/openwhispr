@@ -2,7 +2,8 @@
   "appId": "com.gizmolabs.openwhispr",
   "afterPack": "scripts/afterPack.js",
   "extraMetadata": {
-    "windowsTrayIdentity": true
+    "windowsTrayIdentity": true,
+    "personalEdition": true
   },
   "productName": "OpenWhispr",
   "protocols": {
@@ -37,7 +38,6 @@
     "src/components.json",
     "!node_modules/.cache/**/*",
     "!src/node_modules/**/*",
-
     "!**/node_modules/electron/**",
     "!**/node_modules/electron-builder/**",
     "!**/node_modules/app-builder-bin/**",
@@ -45,7 +45,6 @@
     "!**/node_modules/builder-util/**",
     "!**/node_modules/dmg-builder/**",
     "!**/node_modules/7zip-bin/**",
-
     "!**/node_modules/typescript/**",
     "!**/node_modules/prettier/**",
     "!**/node_modules/eslint/**",
@@ -53,20 +52,17 @@
     "!**/node_modules/@eslint/**",
     "!**/node_modules/@typescript-eslint/**",
     "!**/node_modules/globals/**",
-
     "!**/node_modules/vite/**",
     "!**/node_modules/@vitejs/**",
     "!**/node_modules/esbuild/**",
     "!**/node_modules/@esbuild/**",
     "!**/node_modules/rollup/**",
     "!**/node_modules/@rollup/**",
-
     "!**/node_modules/postcss/**",
     "!**/node_modules/autoprefixer/**",
     "!**/node_modules/tailwindcss/**",
     "!**/node_modules/@tailwindcss/**",
     "!**/node_modules/lightningcss*/**",
-
     "!**/node_modules/react/**",
     "!**/node_modules/react-dom/**",
     "!**/node_modules/lucide-react/**",
@@ -77,12 +73,10 @@
     "!**/node_modules/tw-animate-css/**",
     "!**/node_modules/react-markdown/**",
     "!**/node_modules/shadcn-ui/**",
-
     "!**/node_modules/@types/**",
     "!**/node_modules/concurrently/**",
     "!**/node_modules/cross-env/**",
     "!**/node_modules/@electron/notarize/**",
-
     "!**/node_modules/**/test/**",
     "!**/node_modules/**/tests/**",
     "!**/node_modules/**/*.ts",
@@ -180,13 +174,8 @@
   "win": {
     "target": ["nsis"],
     "icon": "src/assets/icon.ico",
-    "forceCodeSigning": true,
-    "azureSignOptions": {
-      "endpoint": "https://eus.codesigning.azure.net/",
-      "certificateProfileName": "openwhispr-release",
-      "codeSigningAccountName": "OpenWhispr",
-      "publisherName": "CN=Gizmo Labs Inc., O=Gizmo Labs Inc., L=Wilmington, S=Delaware, C=US"
-    },
+    "forceCodeSigning": false,
+    "azureSignOptions": null,
     "extraResources": [
       {
         "from": "resources/bin/nircmd.exe",
@@ -275,11 +264,5 @@
       "height": 380
     }
   },
-  "publish": {
-    "provider": "github",
-    "owner": "OpenWhispr",
-    "repo": "openwhispr",
-    "private": false,
-    "releaseType": "draft"
-  }
+  "publish": null
 }

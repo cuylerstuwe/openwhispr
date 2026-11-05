@@ -1,28 +1,28 @@
 import { useCallback, useMemo, useRef } from "react";
-import { getAuthRequestContextSnapshot, hasUsableCredential } from "../lib/authRequestContext";
 import { useShallow } from "zustand/react/shallow";
-import { usePolicyStore } from "../stores/policyStore";
+import { getAuthRequestContextSnapshot, hasUsableCredential } from "../lib/authRequestContext";
 import { useManagedScopeResolution } from "../stores/enterpriseIdentityStore";
-import {
-  getSettings,
-  selectPolicyEffectiveSettings,
-  useSettingsStore,
-} from "../stores/settingsStore";
 import {
   filterModeOptionsByPolicy,
   getTranscriptionSelection,
-  isModeAllowedByPolicy,
-  isTranscriptionSelectionAllowed,
   isAudioFeatureAllowed,
   isMeetingAutoTranscriptionAllowed,
   isMeetingTranscriptionStartManual,
+  isModeAllowedByPolicy,
   isTranscriptionContextAllowed,
+  isTranscriptionSelectionAllowed,
   reconcilePolicyModeSelection,
   transcriptionChoiceRefusal,
   type LocalModelRefusal,
   type PolicyDecisionSnapshot,
   type TranscriptionPolicyContext,
 } from "../stores/policyRules";
+import { usePolicyStore } from "../stores/policyStore";
+import {
+  getSettings,
+  selectPolicyEffectiveSettings,
+  useSettingsStore,
+} from "../stores/settingsStore";
 import type { InferenceMode } from "../types/electron";
 import type { PolicyScope } from "../types/policy";
 
@@ -135,6 +135,7 @@ export function usePolicyModeOptions<T extends { id: InferenceMode; disabled?: b
   }
 ): PolicyModeOptions<T> {
   const snapshot = usePolicySnapshot();
+  options = options.filter((option) => option.id !== "openwhispr");
   const modes = filterModeOptionsByPolicy(options, scope, snapshot, providerCatalog);
   const selectionIsVisible = modes.some((option) => option.id === selectedMode && !option.disabled);
   const preservesRawSelection = snapshot.status === "idle" || snapshot.status === "unmanaged";
@@ -144,6 +145,7 @@ export function usePolicyModeOptions<T extends { id: InferenceMode; disabled?: b
       preservesRawSelection || selectionIsVisible
         ? selectedMode
         : reconcilePolicyModeSelection(options, scope, snapshot, selectedMode, providerCatalog),
-    isModeAllowed: (mode: InferenceMode) => isModeAllowedByPolicy(snapshot, scope, mode),
+    isModeAllowed: (mode: InferenceMode) =>
+      mode !== "openwhispr" && isModeAllowedByPolicy(snapshot, scope, mode),
   };
 }

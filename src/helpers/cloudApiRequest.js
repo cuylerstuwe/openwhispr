@@ -65,103 +65,14 @@ function captureAuthFence(tokenStore, expectedGeneration) {
   };
 }
 
-function createCloudApiRequestHandler({
-  getApiUrl,
-  getAppVersion,
-  proxyFetch,
-  tokenStore,
-  logger,
-}) {
-  return async function handleCloudApiRequest(opts) {
-    try {
-      const apiUrl = getApiUrl();
-      if (!apiUrl) throw new Error("OpenWhispr API URL not configured");
-
-      if (typeof opts?.path !== "string" || !opts.path.startsWith("/")) {
-        return { success: false, error: "Invalid API path" };
-      }
-      const targetUrl = new URL(opts.path, apiUrl);
-      if (targetUrl.origin !== new URL(apiUrl).origin) {
-        return { success: false, error: "Invalid API path" };
-      }
-      // Concatenation (not targetUrl) preserves any base path in apiUrl; the
-      // origin check above still rejects protocol-relative "//host" paths.
-      const requestUrl = `${apiUrl}${opts.path}`;
-
-      // Public calls deliberately carry no ambient bearer/cookie. They need
-      // no account fence and remain usable while auth is unresolved.
-      const fence = opts.public ? null : captureAuthFence(tokenStore, opts.expectedAuthGeneration);
-      const method = (opts.method || "GET").toUpperCase();
-      // Public invitation previews are not policy-aware and intentionally stay
-      // on the legacy API contract. Authenticated cloud calls opt into policy
-      // v1 using the same exact headers as direct main-process request paths.
-      const headers = fence
-        ? withPolicyRequestHeaders({ Authorization: fence.authorization }, getAppVersion())
-        : { "x-openwhispr-version": getAppVersion() };
-      headers["x-openwhispr-source"] = "desktop";
-      const fetchOptions = {
-        method,
-        headers,
-        useSessionCookies: false,
-      };
-      if (opts.body !== undefined) {
-        headers["Content-Type"] = "application/json";
-        fetchOptions.body = JSON.stringify(opts.body);
-      }
-
-      const response = fence
-        ? await fence.awaitBound(() => proxyFetch(requestUrl, fetchOptions))
-        : await proxyFetch(requestUrl, fetchOptions);
-
-      if (response.status === 401) {
-        fence?.assertCurrent();
-        return {
-          success: false,
-          error: "Session expired",
-          code: "AUTH_EXPIRED",
-          status: 401,
-        };
-      }
-      if (response.status === 503) {
-        fence?.assertCurrent();
-        return {
-          success: false,
-          error: "Service temporarily unavailable",
-          code: "SERVER_ERROR",
-          status: 503,
-        };
-      }
-
-      const data = fence
-        ? await fence.awaitBound(() => response.json().catch(() => null))
-        : await response.json().catch(() => null);
-
-      if (!response.ok) {
-        fence?.assertCurrent();
-        const message = data?.error?.message || data?.error || `API error: ${response.status}`;
-        return {
-          success: false,
-          error: message,
-          status: response.status,
-          code: data?.code,
-          // Shared dictionary 409s put their conflicts beside `code`, not under `data`.
-          details:
-            data?.data ??
-            (data?.conflicts !== undefined ? { conflicts: data.conflicts } : undefined),
-          minAppVersion: data?.minAppVersion ?? data?.data?.minAppVersion,
-        };
-      }
-
-      fence?.assertCurrent();
-      return { success: true, data };
-    } catch (error) {
-      if (error instanceof AuthContextError) return authFailure(error);
-      logger?.error?.(
-        `Cloud API request error (${opts?.path}): ${error?.message || error} ${error?.code || ""}`.trim(),
-        error?.stack
-      );
-      return { success: false, error: error?.message || String(error) };
-    }
+function createCloudApiRequestHandler() {
+  return async function () {
+    return {
+      success: false,
+      status: 0,
+      code: "PERSONAL_EDITION",
+      error: "Company services are not part of this build.",
+    };
   };
 }
 

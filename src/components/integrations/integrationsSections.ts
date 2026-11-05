@@ -10,8 +10,8 @@ export const INTEGRATIONS_SECTION_GROUPS: ReadonlyArray<{
   sections: readonly IntegrationsSection[];
 }> = [
   { id: "meetings", sections: ["calendars"] },
-  { id: "assistant", sections: ["connectors", "skills"] },
-  { id: "developer", sections: ["api", "mcp", "cli"] },
+  { id: "assistant", sections: ["skills"] },
+  { id: "developer", sections: ["cli"] },
 ];
 
 export const INTEGRATIONS_SECTION_ICONS: Record<
@@ -41,23 +41,9 @@ export function sectionMeta(
   section: IntegrationsSection,
   { isPaid, connectors, connectedCalendars }: SectionMetaInput
 ): SectionMeta | null {
-  switch (section) {
-    case "connectors":
-      // Turned off by the organization: no plan would change that, and no login can act.
-      if (connectors.blockedByOrg) return null;
-      if (!connectors.isPaid) return { kind: "badge", badge: "pro" };
-      return connectors.ready > 0 ? { kind: "count", value: connectors.ready } : null;
-    case "calendars":
-      return connectedCalendars > 0 ? { kind: "count", value: connectedCalendars } : null;
-    case "skills":
-      return null;
-    case "api":
-    case "mcp":
-      return isPaid ? null : { kind: "badge", badge: "pro" };
-    case "cli":
-      // Local mode is free; saying so is the point of surfacing it to free plans.
-      return isPaid ? null : { kind: "badge", badge: "free" };
-  }
+  if (section === "calendars" && connectedCalendars > 0)
+    return { kind: "count", value: connectedCalendars };
+  return null;
 }
 
 export const INTEGRATIONS_SECTIONS: readonly IntegrationsSection[] =

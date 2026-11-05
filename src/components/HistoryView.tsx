@@ -1,27 +1,22 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { cn } from "./lib/utils";
-import { useUiLocale } from "../hooks/useUiLocale";
-import { Button } from "./ui/button";
-import { PAGE_CONTENT_WIDTH_CLASS } from "./ui/pageWidth";
-import { Loader2, Sparkles, X, Trash2, Archive } from "./icons";
-import TranscriptionItem from "./ui/TranscriptionItem";
-import ThemedEmptyIllustration from "./ui/ThemedEmptyIllustration";
-import DictationHotkeyHint from "./ui/DictationHotkeyHint";
-import { BIDI_VALUE_TOKEN, BidiInterpolatedText } from "./ui/BidiInterpolatedText";
-import historyEmptyLight from "../assets/empty-states/home-history-light.svg";
 import historyEmptyDark from "../assets/empty-states/home-history-dark.svg";
-import type { TranscriptionItem as TranscriptionItemType } from "../types/electron";
-import { formatDateGroup } from "../utils/dateFormatting";
+import historyEmptyLight from "../assets/empty-states/home-history-light.svg";
+import { useUiLocale } from "../hooks/useUiLocale";
 import { useUpcomingEvents } from "../hooks/useUpcomingEvents";
-import UpcomingMeetings from "./UpcomingMeetings";
-import { useSettingsStore } from "../stores/settingsStore";
 import { effectiveLocalHistoryEnabled } from "../stores/policyRules";
 import { usePolicyStore } from "../stores/policyStore";
-import { useToneStylePrompt } from "../hooks/useToneStylePrompt";
-import ToneStyleBanner from "./toneStyle/ToneStyleBanner";
-import ToneStyleSetupDialog from "./toneStyle/ToneStyleSetupDialog";
-import { turnOnDictationCleanup } from "./toneStyle/dictationCleanup";
+import { useSettingsStore } from "../stores/settingsStore";
+import type { TranscriptionItem as TranscriptionItemType } from "../types/electron";
+import { formatDateGroup } from "../utils/dateFormatting";
+import UpcomingMeetings from "./UpcomingMeetings";
+import { Archive, Loader2, Trash2 } from "./icons";
+import { cn } from "./lib/utils";
+import { BIDI_VALUE_TOKEN, BidiInterpolatedText } from "./ui/BidiInterpolatedText";
+import DictationHotkeyHint from "./ui/DictationHotkeyHint";
+import ThemedEmptyIllustration from "./ui/ThemedEmptyIllustration";
+import TranscriptionItem from "./ui/TranscriptionItem";
+import { PAGE_CONTENT_WIDTH_CLASS } from "./ui/pageWidth";
 
 interface HistoryViewProps {
   history: TranscriptionItemType[];
@@ -67,7 +62,6 @@ export default function HistoryView({
     effectiveLocalHistoryEnabled(policyState, personalDataRetentionEnabled)
   );
   const { events, isLoading: eventsLoading, isConnected } = useUpcomingEvents();
-  const toneStylePrompt = useToneStylePrompt();
   const firstName = userName?.trim().split(/\s+/)[0];
   const hasHistory = history.length > 0;
 
@@ -124,58 +118,6 @@ export default function HistoryView({
           t(hasHistory ? "controlPanel.history.welcomeBack" : "controlPanel.history.welcome")
         )}
       </h2>
-      {toneStylePrompt.showBanner && (
-        <ToneStyleBanner
-          cleanupEnabled={useCleanupModel}
-          onStart={() => {
-            if (!useCleanupModel) turnOnDictationCleanup();
-            toneStylePrompt.setDialogOpen(true);
-          }}
-          onDismiss={toneStylePrompt.dismissBanner}
-        />
-      )}
-      <ToneStyleSetupDialog
-        open={toneStylePrompt.dialogOpen}
-        onOpenChange={toneStylePrompt.setDialogOpen}
-        onOpenSettings={onOpenSettings}
-      />
-      {/* The Tone & Style banner offers to turn cleanup on itself. */}
-      {!useCleanupModel && !aiCTADismissed && !toneStylePrompt.showBanner && (
-        <div className="mb-3 relative rounded-lg border border-primary/20 bg-primary/5 dark:bg-primary/10 p-3">
-          <button
-            onClick={() => {
-              localStorage.setItem("aiCTADismissed", "true");
-              setAiCTADismissed(true);
-            }}
-            aria-label={t("common.close")}
-            className="absolute top-2 end-2 p-1 rounded-sm text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-          >
-            <X size={14} />
-          </button>
-          <div className="flex items-start gap-3 pe-6">
-            <div className="shrink-0 w-8 h-8 rounded-md bg-primary/10 dark:bg-primary/20 flex items-center justify-center">
-              <Sparkles size={16} className="text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-foreground mb-0.5">
-                {t("controlPanel.aiCta.title")}
-              </p>
-              <p className="text-xs text-muted-foreground mb-2">
-                {t("controlPanel.aiCta.description")}
-              </p>
-              <Button
-                variant="default"
-                size="sm"
-                className="h-7 text-xs"
-                onClick={() => onOpenSettings("intelligence")}
-              >
-                {t("controlPanel.aiCta.enable")}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className="flex gap-8">
         <div className="min-w-0 flex-1">
           {!dataRetentionEnabled && (
