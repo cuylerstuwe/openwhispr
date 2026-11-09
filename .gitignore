@@ -349,3 +349,7 @@ privacy-audit*/
 work/
 outputs/
 recordings/
+
+# OS-encrypted personal configuration recovery copies
+personal-configuration/
+configuration.enc*

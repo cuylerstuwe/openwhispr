@@ -1,6 +1,6 @@
 {
   "name": "open-whispr",
-  "version": "1.11.1-personal.1",
+  "version": "1.11.1-personal.2",
   "description": "Standalone personal dictation, local history and local Insights",
   "main": "main.js",
   "private": true,

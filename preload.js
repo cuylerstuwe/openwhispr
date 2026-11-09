@@ -63,6 +63,9 @@ const registerListener = (channel, handlerFactory) => {
 };
 
 contextBridge.exposeInMainWorld("electronAPI", {
+  bootstrapPersonalConfiguration: (current) =>
+    ipcRenderer.sendSync("personal-configuration-bootstrap", current),
+  patchPersonalConfiguration: (change) => ipcRenderer.send("personal-configuration-patch", change),
   setOnboardingWindowMode: (mode) => ipcRenderer.invoke("onboarding-set-window-mode", mode),
   setOnboardingActive: (active) => ipcRenderer.invoke("onboarding-set-active", active),
   openPermissionGuide: (state) => ipcRenderer.invoke("permission-guide-open", state),

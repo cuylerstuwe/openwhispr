@@ -1,6 +1,6 @@
 # Whispr Personal for Windows
 
-This personal desktop variant is based on cuylerstuwe/openwhispr at ed28e3cc22a4f831abd5cf7c31f4ea275fb76d3c. It retains the original MIT license and attribution. The Windows executable and install directory remain OpenWhispr so the existing installation and profile upgrade in place; the UI says Whispr Personal and the version is 1.11.1-personal.1.
+This personal desktop variant is based on cuylerstuwe/openwhispr at ed28e3cc22a4f831abd5cf7c31f4ea275fb76d3c. It retains the original MIT license and attribution. The Windows executable and install directory remain OpenWhispr so the existing installation and profile upgrade in place; the UI says Whispr Personal and the version is 1.11.1-personal.2.
 
 ## Personal behavior
 
@@ -10,6 +10,7 @@ This personal desktop variant is based on cuylerstuwe/openwhispr at ed28e3cc22a4
 - No upstream update checks or automatic installation. Rebuild this variant to update it. The upstream authentication and updater packages are no longer desktop dependencies.
 - The setup wizard has a Skip model setup action. AI cleanup is optional and stays off when skipped. A transcription model or endpoint is needed when you actually dictate.
 - Local transcript/audio history and retention controls remain available. Existing settings, endpoint credentials, and history preferences are preserved.
+- Windows launcher and direct launches use the same explicit profile path. Preferences and encrypted credential files have an additional OS-encrypted recovery copy outside Chromium storage, under `%APPDATA%\WhisprPersonal\configuration.enc`. Preferences restore before the settings store initializes; missing native settings/credential files restore before the app loads them. Settings changes and credential saves update the local recovery copy, and an explicit Reset app data erases it. No recovery data leaves the PC. Isolated test profiles have their own recovery copy.
 - Insights reads device-local SQLite usage records directly: spoken words, measured speaking rate, dictation count, streaks, and activity heatmap. Empty profiles show real zeros. Aggregate usage is recorded even when saving transcript/audio content is disabled. Historical saved dictations are reconciled by the existing restart-safe local backfill. No account is required.
 
 ## Network behavior
@@ -28,4 +29,4 @@ Use Node 24 or newer, install dependencies, and prepare native resources using t
 
 For isolated testing, WHISPR_PERSONAL_DATA_DIR may point to a separate profile directory. Do not set it for ordinary use if you want your existing profile.
 
-Database tests must run under an ABI-compatible Node/Electron runtime with REQUIRE_DB_TESTS=1 so they cannot silently skip. Focused coverage includes analyticsDatabase, analytics, personalBoundary, personalPreferences, and transcriptionBaseUrl.
+Database tests must run under an ABI-compatible Node/Electron runtime with REQUIRE_DB_TESTS=1 so they cannot silently skip. Focused coverage includes analyticsDatabase, analytics, personalBoundary, personalPreferences, transcriptionBaseUrl, and personalConfiguration.

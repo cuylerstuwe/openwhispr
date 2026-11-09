@@ -1,5 +1,6 @@
 // Runs before the settings store is evaluated. Preserve personal endpoints,
 // credentials, history, and preferences; retire only company-service choices.
+import { attachPersonalPersistence } from "./persistence.js";
 export function initializePersonalPreferences(storage) {
   for (const key of [
     "telemetryEnabled",
@@ -43,4 +44,7 @@ export function initializePersonalPreferences(storage) {
   storage.setItem("personalEditionVersion", "1");
 }
 
-if (typeof window !== "undefined") initializePersonalPreferences(window.localStorage);
+if (typeof window !== "undefined") {
+  attachPersonalPersistence(window.localStorage, window.electronAPI);
+  initializePersonalPreferences(window.localStorage);
+}

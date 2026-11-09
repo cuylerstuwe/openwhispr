@@ -4653,6 +4653,7 @@ class IPCHandlers {
     });
 
     ipcMain.handle("cleanup-app", async (event) => {
+      require("./personalConfiguration").clearPersonalConfiguration();
       const fs = require("fs");
       const os = require("os");
       const errors = [];

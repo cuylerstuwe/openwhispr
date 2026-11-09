@@ -22,6 +22,7 @@ const {
   ipcMain,
   net,
   session,
+  safeStorage,
   systemPreferences,
 } = require("electron");
 require("./src/helpers/personalBoundary").installPersonalBoundary({ app, session, ipcMain });
@@ -83,6 +84,8 @@ function configureChannelUserDataPath() {
     return;
   }
   if (APP_CHANNEL === "production") {
+    if (process.platform === "win32")
+      app.setPath("userData", path.join(app.getPath("appData"), "open-whispr"));
     return;
   }
 
@@ -324,6 +327,12 @@ function wasLaunchedAtLoginHidden() {
 
 function initializeCoreManagers() {
   setupProductionPath();
+  require("./src/helpers/personalConfiguration").installPersonalConfiguration({
+    app,
+    ipcMain,
+    safeStorage,
+    channel: APP_CHANNEL,
+  });
 
   debugLogger = require("./src/helpers/debugLogger");
   debugLogger.ensureFileLogging();
